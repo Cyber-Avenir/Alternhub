@@ -24,7 +24,20 @@
       "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma db push --force-reset)",
       "Bash(cmd.exe /c \"taskkill /F /IM node.exe 2>nul\")",
       "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx ts-node --compiler-options '{\"\"module\"\":\"\"CommonJS\"\"}' prisma/seed.ts)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/auth/login)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/auth/login)",
+      "Bash(gh repo:*)",
+      "Bash(git --version)",
+      "Bash(winget install:*)",
+      "mcp__dcdb7dfd-663d-47e2-b06d-be22e6ad35c7__netlify-user-services-reader",
+      "mcp__dcdb7dfd-663d-47e2-b06d-be22e6ad35c7__netlify-team-services-reader",
+      "mcp__dcdb7dfd-663d-47e2-b06d-be22e6ad35c7__netlify-project-services-updater",
+      "mcp__dcdb7dfd-663d-47e2-b06d-be22e6ad35c7__netlify-project-services-reader",
+      "mcp__dcdb7dfd-663d-47e2-b06d-be22e6ad35c7__netlify-deploy-services-updater",
+      "mcp__dcdb7dfd-663d-47e2-b06d-be22e6ad35c7__netlify-deploy-services-reader",
+      "Bash(npx prisma:*)",
+      "Bash(D:/AlterNHub/.env.local:*)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma migrate dev --name add_pipeline_recruitment)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma db push --skip-generate)"
     ]
   }
 }

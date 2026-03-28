@@ -35,6 +35,11 @@ model User {
   // Recruiter
   recruteurProfile RecruteurProfile?
   offres           Offre[]
+  pipelineAsRecruteur PipelineApplication[] @relation("PipelineRecruteur")
+  sentMessages     Message[]
+
+  // Pipeline (as student)
+  pipelineAsStudent PipelineApplication[] @relation("PipelineStudent")
 
   // Shared
   accounts         Account[]
@@ -203,6 +208,7 @@ model Offre {
   tags          String       @default("[]")  // JSON array of skill/keyword tags
   skills        OffreSkill[]
   targetEcoles  OffreEcole[]
+  pipelineApps  PipelineApplication[]
   expiresAt     DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -288,6 +294,48 @@ model Aide {
   deadline    DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+// ─── PIPELINE RECRUTEMENT (Recruiter view) ──────────────────────────────────────
+model PipelineApplication {
+  id                String    @id @default(cuid())
+  offreId           String
+  offre             Offre     @relation(fields: [offreId], references: [id], onDelete: Cascade)
+  studentId         String
+  student           User      @relation("PipelineStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  recruteurId       String
+  recruteur         User      @relation("PipelineRecruteur", fields: [recruteurId], references: [id], onDelete: Cascade)
+
+  // Status pipeline: INITIAL → RECRUTEMENT_EN_COURS → ENTRETIEN_ACCEPTE → HIRED / REJECTED
+  status            String    @default("INITIAL")
+
+  appliedAt         DateTime  @default(now())
+  statusUpdatedAt   DateTime  @updatedAt
+  responseDeadline  DateTime?
+
+  messages          Message[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([offreId, studentId])
+}
+
+// ─── MESSAGE (Chat between recruiter & student) ────────────────────────────────
+model Message {
+  id                    String    @id @default(cuid())
+  pipelineApplicationId String
+  pipelineApplication   PipelineApplication @relation(fields: [pipelineApplicationId], references: [id], onDelete: Cascade)
+
+  senderId              String
+  sender                User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  type                  String    @default("TEXT")  // "TEXT" | "CALL_LINK" | "SYSTEM"
+  content               String
+  callLink              String?   // pour générer un lien de visio
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 }
 
 // ─── AUTH (NextAuth) ──────────────────────────────────────────────────────────
