@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma db push)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma db seed)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx tsc --noEmit)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"/ → %{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"/auth/login → %{http_code}\\\\n\" http://localhost:3000/auth/login)",
+      "Bash(curl -s -o /dev/null -w \"/auth/register → %{http_code}\\\\n\" http://localhost:3000/auth/register)",
+      "Bash(curl -s -o /dev/null -w \"/student/dashboard \\(no auth\\) → %{http_code}\\\\n\" http://localhost:3000/student/dashboard)",
+      "Bash(curl -s -o /dev/null -w \"/admin \\(no auth\\) → %{http_code}\\\\n\" http://localhost:3000/admin)",
+      "Bash(npx kill-port:*)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma generate)",
+      "Bash(Get-Process node:*)",
+      "Bash(Stop-Process -Force)",
+      "Bash(cmd.exe /c \"netstat -ano | findstr :3000\")",
+      "Bash(cmd.exe /c \"tasklist | findstr node\")",
+      "Bash(cmd.exe /c \"taskkill /F /PID 84264 /PID 55400 /PID 91384 /PID 91264 /PID 43252 /PID 25712 /PID 39688 /PID 4928\")",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx next dev --port 3000)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma migrate dev --name v3_offres_ecoles_recruteur --skip-generate)",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma db push --force-reset)",
+      "Bash(cmd.exe /c \"taskkill /F /IM node.exe 2>nul\")",
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx ts-node --compiler-options '{\"\"module\"\":\"\"CommonJS\"\"}' prisma/seed.ts)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/auth/login)"
+    ]
+  }
+}
