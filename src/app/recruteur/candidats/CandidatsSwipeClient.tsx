@@ -87,14 +87,22 @@ export function CandidatsSwipeClient({ students, offres, isPremium }: Props) {
     if (!selectedStudent) return;
     setInviting(true);
     try {
-      const res = await fetch("/api/candidatures/apply", {
+      const res = await fetch("/api/pipeline/add-applicant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ offreId: selectedStudent.offreId }),
+        body: JSON.stringify({
+          studentId: selectedStudent.studentId,
+          offreId: selectedStudent.offreId,
+        }),
       });
       if (res.ok) {
         alert("Candidat ajouté au pipeline!");
         setSelectedStudent(null);
+        // Reload to show updated state
+        window.location.reload();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Erreur lors de l'ajout au pipeline");
       }
     } catch (error) {
       console.error("Error:", error);

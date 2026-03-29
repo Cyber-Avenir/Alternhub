@@ -13,23 +13,21 @@ export async function POST(request: NextRequest) {
   try {
     const { offreId } = await request.json();
 
-    // Get the offre and its recruiter
+    // Get the offre
     const offre = await prisma.offre.findUnique({
       where: { id: offreId },
-      select: { recruteurId: true },
+      select: { title: true, recruteurId: true },
     });
 
     if (!offre) {
       return NextResponse.json({ error: 'Offre not found' }, { status: 404 });
     }
 
-    // Check if student already applied
-    const existing = await prisma.pipelineApplication.findUnique({
+    // Check if student already has a candidature for this offer
+    const existing = await prisma.candidature.findFirst({
       where: {
-        offreId_studentId: {
-          offreId,
-          studentId: session.user.id,
-        },
+        userId: session.user.id,
+        offreId: offreId,
       },
     });
 
@@ -40,17 +38,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create PipelineApplication
-    const pipelineApp = await prisma.pipelineApplication.create({
+    // Create Candidature (student-side)
+    const candidature = await prisma.candidature.create({
       data: {
-        offreId,
-        studentId: session.user.id,
-        recruteurId: offre.recruteurId,
-        status: 'INITIAL',
+        userId: session.user.id,
+        company: 'Unknown',
+        role: offre.title,
+        contractType: 'ALTERNANCE',
+        status: 'APPLIED',
+        appliedAt: new Date(),
+        offreId: offreId,
       },
     });
 
-    return NextResponse.json(pipelineApp);
+    return NextResponse.json(candidature);
   } catch (error) {
     console.error('Error applying to offre:', error);
     return NextResponse.json({ error: 'Failed to apply' }, { status: 500 });

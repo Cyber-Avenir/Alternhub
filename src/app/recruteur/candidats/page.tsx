@@ -18,19 +18,43 @@ export default async function CandidatsPage() {
 
   const isPremium = user?.subscriptionTier === "PREMIUM" || user?.subscriptionTier === "PRO";
 
-  // Fetch students in active search
-  const students = await prisma.user.findMany({
+  // Fetch applicants for this recruiter's offers
+  const candidatures = await prisma.candidature.findMany({
     where: {
-      role: "STUDENT",
-      searchStatus: "SEARCHING",
+      offre: {
+        recruteurId: userId,
+      },
     },
     include: {
-      profile: { include: { ecole: true } },
-      skills: { include: { skill: true }, take: 8 },
-      missions: { where: { status: "COMPLETED" }, take: 5 },
+      user: {
+        include: {
+          profile: { include: { ecole: true } },
+          skills: { include: { skill: true }, take: 8 },
+          missions: { where: { status: "COMPLETED" }, take: 5 },
+        },
+      },
+      offre: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
     },
+    orderBy: { appliedAt: "desc" },
     take: 50,
   });
+
+  // Transform candidatures to students format for the component
+  const students = candidatures.map((cand) => ({
+    id: cand.user.id,
+    name: cand.user.name,
+    email: cand.user.email,
+    searchStatus: cand.user.searchStatus,
+    profile: cand.user.profile,
+    skills: cand.user.skills,
+    missions: cand.user.missions,
+    offreId: cand.offreId,
+  }));
 
   // Get recruiter's published offres for matching
   const offres = await prisma.offre.findMany({

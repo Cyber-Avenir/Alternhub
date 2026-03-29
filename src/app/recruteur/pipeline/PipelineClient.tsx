@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MessageCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { MessageCircle, Clock, CheckCircle, XCircle, MapPin, Zap } from 'lucide-react';
 
 const STATUS_COLORS = {
   INITIAL: 'bg-gray-100 text-gray-800',
@@ -37,6 +37,16 @@ const STATUS_LABELS = {
   REJECTED: 'Rejeté',
 };
 
+interface StudentProfile {
+  bio?: string | null;
+  location?: string | null;
+  linkedinUrl?: string | null;
+  ecole?: {
+    name: string;
+    city?: string | null;
+  } | null;
+}
+
 interface Application {
   id: string;
   offreId: string;
@@ -48,6 +58,12 @@ interface Application {
   student: {
     name: string;
     email: string;
+    profile?: StudentProfile | null;
+    skills?: Array<{
+      skillId: string;
+      level: number;
+      skill: { name: string };
+    }>;
   };
   offre: {
     title: string;
@@ -64,6 +80,7 @@ export default function PipelineClient({
   applications: Application[];
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Application | null>(null);
 
   const handleStatusChange = async (appId: string, newStatus: string) => {
     setUpdating(appId);
@@ -142,7 +159,12 @@ export default function PipelineClient({
                       {/* Student Info */}
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-semibold">{app.student.name}</h4>
+                          <button
+                            onClick={() => setSelectedStudent(app)}
+                            className="font-semibold hover:text-blue-600 cursor-pointer transition-colors"
+                          >
+                            {app.student.name}
+                          </button>
                           <Badge variant="outline">{app.student.email}</Badge>
                         </div>
 
@@ -221,6 +243,102 @@ export default function PipelineClient({
           </div>
         </div>
       ))}
+
+      {/* Modal for student profile */}
+      {selectedStudent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">{selectedStudent.student.name}</h2>
+                  <p className="text-sm text-slate-500">{selectedStudent.student.email}</p>
+                  {selectedStudent.student.profile?.location && (
+                    <p className="text-sm text-slate-600 flex items-center gap-1 mt-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {selectedStudent.student.profile.location}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSelectedStudent(null)}
+                  className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Offre */}
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-3">
+                <p className="text-xs font-semibold text-blue-700">Candidature pour</p>
+                <p className="text-sm font-medium text-blue-900">{selectedStudent.offre.title}</p>
+              </div>
+
+              {/* Status */}
+              <div className="rounded-xl bg-slate-100 p-3">
+                <p className="text-xs font-semibold text-slate-600 mb-1">Statut actuel</p>
+                <Badge className={STATUS_COLORS[selectedStudent.status as keyof typeof STATUS_COLORS]}>
+                  {STATUS_LABELS[selectedStudent.status as keyof typeof STATUS_LABELS]}
+                </Badge>
+              </div>
+
+              {/* School & Bio */}
+              {selectedStudent.student.profile?.ecole && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 mb-1">École</p>
+                  <p className="text-sm text-slate-700">{selectedStudent.student.profile.ecole.name}</p>
+                </div>
+              )}
+
+              {selectedStudent.student.profile?.bio && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 mb-1">À propos</p>
+                  <p className="text-sm text-slate-600">{selectedStudent.student.profile.bio}</p>
+                </div>
+              )}
+
+              {/* Skills */}
+              {selectedStudent.student.skills && selectedStudent.student.skills.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1">
+                    <Zap className="h-3.5 w-3.5" /> Compétences
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedStudent.student.skills.map((s) => (
+                      <span key={s.skillId} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+                        {s.skill.name} · {s.level}/5
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* LinkedIn */}
+              {selectedStudent.student.profile?.linkedinUrl && (
+                <div>
+                  <a
+                    href={selectedStudent.student.profile.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Voir le profil LinkedIn →
+                  </a>
+                </div>
+              )}
+
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedStudent(null)}
+                className="w-full mt-4 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

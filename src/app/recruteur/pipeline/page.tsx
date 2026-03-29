@@ -21,6 +21,30 @@ export default async function PipelinePage() {
         select: {
           name: true,
           email: true,
+          profile: {
+            select: {
+              bio: true,
+              location: true,
+              linkedinUrl: true,
+              ecole: {
+                select: {
+                  name: true,
+                  city: true,
+                },
+              },
+            },
+          },
+          skills: {
+            select: {
+              skillId: true,
+              level: true,
+              skill: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
         },
       },
       offre: {
