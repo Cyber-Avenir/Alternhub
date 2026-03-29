@@ -37,7 +37,9 @@
       "Bash(npx prisma:*)",
       "Bash(D:/AlterNHub/.env.local:*)",
       "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma migrate dev --name add_pipeline_recruitment)",
-      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma db push --skip-generate)"
+      "Bash(DATABASE_URL=\"file:./prisma/dev.db\" npx prisma db push --skip-generate)",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:3000)"
     ]
   }
 }

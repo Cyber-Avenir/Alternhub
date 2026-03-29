@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   X, Heart, Star, MapPin, GraduationCap, Zap, Briefcase,
   ChevronLeft, ChevronRight, Eye, Lock, MessageSquare, Trophy,
-  Users,
+  Users, Loader,
 } from "lucide-react";
 import { computeMatchScore, getMatchLabel } from "@/lib/matching";
 
@@ -45,6 +45,8 @@ export function CandidatsSwipeClient({ students, offres, isPremium }: Props) {
   const [liked, setLiked] = useState<string[]>([]);
   const [passed, setPassed] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"swipe" | "list">("swipe");
+  const [selectedStudent, setSelectedStudent] = useState<{ studentId: string; offreId: string } | null>(null);
+  const [inviting, setInviting] = useState(false);
 
   const activeOffre = offres.find((o) => o.id === selectedOffre);
 
@@ -79,6 +81,27 @@ export function CandidatsSwipeClient({ students, offres, isPremium }: Props) {
 
   function handlePrev() {
     setCurrentIdx((i) => Math.max(i - 1, 0));
+  }
+
+  async function handleInviteToPipeline() {
+    if (!selectedStudent) return;
+    setInviting(true);
+    try {
+      const res = await fetch("/api/candidatures/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offreId: selectedStudent.offreId }),
+      });
+      if (res.ok) {
+        alert("Candidat ajouté au pipeline!");
+        setSelectedStudent(null);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Erreur lors de l'ajout au pipeline");
+    } finally {
+      setInviting(false);
+    }
   }
 
   if (students.length === 0) {
@@ -337,7 +360,8 @@ export function CandidatsSwipeClient({ students, offres, isPremium }: Props) {
             return (
               <div
                 key={student.id}
-                className={`rounded-2xl border bg-white p-5 transition-all ${isLiked ? "border-green-300 bg-green-50" : "border-slate-200 hover:shadow-md"}`}
+                onClick={() => selectedOffre && setSelectedStudent({ studentId: student.id, offreId: selectedOffre })}
+                className={`rounded-2xl border bg-white p-5 transition-all cursor-pointer ${isLiked ? "border-green-300 bg-green-50" : "border-slate-200 hover:shadow-md hover:border-slate-300"}`}
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-violet-500 text-lg font-bold text-white">
@@ -388,6 +412,121 @@ export function CandidatsSwipeClient({ students, offres, isPremium }: Props) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Modal pour voir les détails et ajouter au pipeline */}
+      {selectedStudent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
+            {(() => {
+              const student = students.find((s) => s.id === selectedStudent.studentId);
+              if (!student) return null;
+
+              const matchInfo = getMatchLabel(
+                students
+                  .map((s) => ({
+                    ...s,
+                    matchScore: computeMatchScore(
+                      s.skills.map((sk) => ({ skillId: sk.skillId, level: sk.level })),
+                      activeOffre?.skills.map((s) => ({ skillId: s.skill.id, required: s.required, weight: s.weight })) ?? []
+                    ),
+                  }))
+                  .find((s) => s.id === student.id)?.matchScore ?? 0
+              );
+
+              return (
+                <div className="p-6 space-y-4">
+                  {/* Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-500 text-xl font-bold text-white">
+                        {(student.name ?? student.email).charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-slate-900">{student.name ?? "Étudiant"}</h2>
+                        <p className="text-sm text-slate-500">{student.email}</p>
+                        {student.profile?.location && (
+                          <p className="text-sm text-slate-600 flex items-center gap-1 mt-1">
+                            <MapPin className="h-3.5 w-3.5" />{student.profile.location}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedStudent(null)}
+                      className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className={`rounded-xl p-3 ${matchInfo.bg}`}>
+                    <p className={`text-sm font-bold ${matchInfo.color}`}>{matchInfo.label}</p>
+                    <p className={`text-2xl font-extrabold ${matchInfo.color}`}>
+                      {students
+                        .map((s) => ({
+                          ...s,
+                          matchScore: computeMatchScore(
+                            s.skills.map((sk) => ({ skillId: sk.skillId, level: sk.level })),
+                            activeOffre?.skills.map((s) => ({ skillId: s.skill.id, required: s.required, weight: s.weight })) ?? []
+                          ),
+                        }))
+                        .find((s) => s.id === student.id)?.matchScore ?? 0}
+                      % de compatibilité
+                    </p>
+                  </div>
+
+                  {/* School & Bio */}
+                  {student.profile?.ecole && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 mb-1">École</p>
+                      <p className="text-sm text-slate-700">{student.profile.ecole.name}</p>
+                    </div>
+                  )}
+
+                  {student.profile?.bio && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 mb-1">À propos</p>
+                      <p className="text-sm text-slate-600">{student.profile.bio}</p>
+                    </div>
+                  )}
+
+                  {/* Skills */}
+                  {student.skills.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 mb-2">Compétences</p>
+                      <div className="flex flex-wrap gap-2">
+                        {student.skills.map((s) => (
+                          <span key={s.skillId} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+                            {s.skill.name} · {s.level}/5
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-4 border-t">
+                    <button
+                      onClick={() => setSelectedStudent(null)}
+                      className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      Fermer
+                    </button>
+                    <button
+                      onClick={handleInviteToPipeline}
+                      disabled={inviting}
+                      className="flex-1 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {inviting && <Loader className="h-4 w-4 animate-spin" />}
+                      Ajouter au pipeline
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
         </div>
       )}
     </div>

@@ -3,7 +3,8 @@
 import { useState, useMemo } from "react";
 import {
   Search, MapPin, Clock, Euro, Building2, Zap, Target,
-  Filter, ChevronDown, ExternalLink, Sparkles, BookmarkPlus,
+  Filter, ChevronDown, ExternalLink, Sparkles, BookmarkPlus, Loader,
+  CheckCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,6 +59,8 @@ export function OffresClient({ offres, userSkills }: Props) {
   const [levelFilter, setLevelFilter] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"match" | "date">("match");
+  const [applying, setApplying] = useState<string | null>(null);
+  const [applied, setApplied] = useState<Set<string>>(new Set());
 
   const studentSkills: UserSkillItem[] = userSkills.map((us) => ({
     skillId: us.skillId,
@@ -101,6 +104,36 @@ export function OffresClient({ offres, userSkills }: Props) {
   }, [scoredOffres, search, contractFilter, levelFilter, remoteOnly, sortBy]);
 
   const topMatches = filtered.filter((o) => o.matchScore >= 60).length;
+
+  const handleApply = async (offreId: string) => {
+    setApplying(offreId);
+    try {
+      const res = await fetch("/api/candidatures/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offreId }),
+      });
+
+      if (res.ok) {
+        setApplied((prev) => new Set([...prev, offreId]));
+        // Reset after 2 seconds
+        setTimeout(() => {
+          setApplied((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(offreId);
+            return newSet;
+          });
+        }, 2000);
+      } else {
+        alert("Erreur lors de la postulation. Veuillez réessayer.");
+      }
+    } catch (error) {
+      console.error("Error applying:", error);
+      alert("Une erreur est survenue.");
+    } finally {
+      setApplying(null);
+    }
+  };
 
   return (
     <div className="p-8">
@@ -333,9 +366,23 @@ export function OffresClient({ offres, userSkills }: Props) {
                         <BookmarkPlus className="h-3.5 w-3.5" />
                         Sauvegarder
                       </button>
-                      <button className="flex items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 transition-colors">
-                        <Target className="h-3.5 w-3.5" />
-                        Postuler
+                      <button
+                        onClick={() => handleApply(offre.id)}
+                        disabled={applying === offre.id || applied.has(offre.id)}
+                        className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold transition-colors ${
+                          applied.has(offre.id)
+                            ? "bg-green-600 text-white"
+                            : "bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+                        }`}
+                      >
+                        {applying === offre.id ? (
+                          <Loader className="h-3.5 w-3.5 animate-spin" />
+                        ) : applied.has(offre.id) ? (
+                          <CheckCircle className="h-3.5 w-3.5" />
+                        ) : (
+                          <Target className="h-3.5 w-3.5" />
+                        )}
+                        {applied.has(offre.id) ? "Candidature envoyée" : "Postuler"}
                       </button>
                     </div>
                   </div>
