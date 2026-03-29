@@ -42,12 +42,6 @@ export default async function CandidatsPage() {
           missions: { where: { status: "COMPLETED" }, take: 5 },
         },
       },
-      offre: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
     },
     orderBy: { appliedAt: "desc" },
     take: 50,
@@ -62,7 +56,7 @@ export default async function CandidatsPage() {
     profile: cand.user.profile,
     skills: cand.user.skills,
     missions: cand.user.missions,
-    offreId: cand.offreId,
+    offreId: cand.offreId || "",
   }));
 
   return <CandidatsSwipeClient students={students} offres={offres} isPremium={isPremium} />;
