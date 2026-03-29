@@ -18,11 +18,20 @@ export default async function CandidatsPage() {
 
   const isPremium = user?.subscriptionTier === "PREMIUM" || user?.subscriptionTier === "PRO";
 
+  // Get recruiter's published offres
+  const offres = await prisma.offre.findMany({
+    where: { recruteurId: userId, status: "PUBLISHED" },
+    include: { skills: { include: { skill: true } } },
+    take: 10,
+  });
+
+  const offreIds = offres.map((o) => o.id);
+
   // Fetch applicants for this recruiter's offers
   const candidatures = await prisma.candidature.findMany({
     where: {
-      offre: {
-        recruteurId: userId,
+      offreId: {
+        in: offreIds,
       },
     },
     include: {
@@ -55,13 +64,6 @@ export default async function CandidatsPage() {
     missions: cand.user.missions,
     offreId: cand.offreId,
   }));
-
-  // Get recruiter's published offres for matching
-  const offres = await prisma.offre.findMany({
-    where: { recruteurId: userId, status: "PUBLISHED" },
-    include: { skills: { include: { skill: true } } },
-    take: 10,
-  });
 
   return <CandidatsSwipeClient students={students} offres={offres} isPremium={isPremium} />;
 }
